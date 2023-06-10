@@ -28,6 +28,6 @@ toggle-container {
 #light-toggle {
     padding: 0;
     border: 0;
-    background-color: inherit;
+    background-color: transparent;
     color: var(--global-text-color);
 }
