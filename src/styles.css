@@ -6,3 +6,11 @@ body {
       padding-top: 0px;
     }
   }
+  img {
+    max-width: 40%;
+    height: auto/9;
+    width: auto\9; /* ie8 */
+}
+nav {
+    background-color: white;
+  }
