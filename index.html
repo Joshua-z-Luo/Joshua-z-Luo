@@ -64,7 +64,7 @@
                   </li>
                   <!-- Toogle color mode -->
                      <button onclick="chBackcolor()" id="light-toggle" title="Change theme">
-                        <i class="fas fa-fill fa-beat"></i> 
+                        <i id="inner-button" class="fas fa-fill style=" style="color:black"></i> 
                      </button>
                </ul>
             </div>
@@ -123,10 +123,14 @@
       <script async src="https://badge.dimensions.ai/badge.js"></script>
       <script>
         count = 1;
-        const colors = ["#ffffff", "#97b2de", "#929e82", "#d9a384"];
+        const colors = ["#ffffff", "#9dcee3", "#edd9a6", "#b8e0d0", "#e6d8df"];
+        window.onload = function() {
+            document.getElementById("inner-button").style.color = colors[(count)%colors.length];
+        }
         function chBackcolor() {
           document.body.style.background = colors[count%colors.length];
           document.getElementById("navbar").style.backgroundColor = colors[count%colors.length];
+          document.getElementById("inner-button").style.color = colors[(count+1)%colors.length];
           count++;
           
         }
