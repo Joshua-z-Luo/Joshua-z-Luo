@@ -14,3 +14,20 @@ body {
 nav {
     background-color: white;
   }
+
+toggle-container {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background-color: var(--global-text-color);
+    border-radius: 1px;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+}
+
+#light-toggle {
+    padding: 0;
+    border: 0;
+    background-color: inherit;
+    color: var(--global-text-color);
+}
