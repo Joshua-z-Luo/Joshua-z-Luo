@@ -82,10 +82,10 @@
   //looks for key presses and logs them
   var keys = [];
   
-  window.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", (e) => {
     keys[e.code] = true;
   });
-  window.addEventListener("keyup", (e) => {
+  document.addEventListener("keyup", (e) => {
     keys[e.code] = false;
   });
   
