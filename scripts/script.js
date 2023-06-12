@@ -81,13 +81,19 @@
   
   //looks for key presses and logs them
   var keys = [];
-  
+document.addEventListener('DOMContentLoaded', init, false);
+function init(){
+  function message () {
+    alert("Hello!");
+  }
   document.addEventListener("keydown", (e) => {
     keys[e.code] = true;
   });
   document.addEventListener("keyup", (e) => {
     keys[e.code] = false;
   });
+};
+  
   
   function playerGroundCheck(event, ground) {
     //runs on collisions events
