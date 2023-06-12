@@ -13,6 +13,13 @@ make portals fireable with ray casting  (consider using point checks, not raycas
 
 
 */
+
+function rotateVector(vector, angle) {
+    return {
+      x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
+      y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle)
+    }
+  }
   
   
   //game objects values
@@ -67,6 +74,65 @@ make portals fireable with ray casting  (consider using point checks, not raycas
     })
   ]);
   
+  // add some ramps to the world for the bodies to roll down
+  World.add(engine.world, [
+    //Bodies.rectangle(200, 150, 700, 20, { isStatic: true, angle: Math.PI * 0.06 }),
+    Bodies.rectangle(620, 270, 1000, 50, {
+      isStatic: true,
+      angle: -Math.PI * 0.1
+    }),
+    Bodies.rectangle(260, 780, 700, 300, {
+      isStatic: true,
+      angle: Math.PI * 0.15
+    }),
+    Bodies.rectangle(1050, 750, 600, 100, {
+      isStatic: true,
+      //angle: -Math.PI * 0.1
+    }),
+  ]);
+  
+  //adds some balls
+  for(var i = 0; i<35;i++){
+    World.add(engine.world, Bodies.circle(400,200,Math.ceil(6+Math.random()*22),{
+      density: 0.0005,
+      friction: 0,//0.05,
+      frictionStatic: 0.5,
+      frictionAir: 0.001,
+      restitution: 0.5,
+      portal: -1, // 0,1 for each portal  and -1 for no portal
+      render:{
+        strokeStyle:'darkgrey',
+        fillStyle:'grey'
+      },
+    })
+  )}
+  //add portals
+  var portal0 = Bodies.rectangle(900-150, game.height-60, 70, 15, {
+    portal: 0,
+    chamfer: { radius: 10 },
+    isStatic: true,
+    isSensor: true,
+    render:{ //orange
+      strokeStyle:'#ffb366',
+      fillStyle:'#ffb366',
+      //lineWidth: 20,
+      opacity: 0.5,
+    },
+    angle: Math.PI*0.5
+  })
+  
+  var portal1 = Bodies.rectangle(640, 0+20, 70, 15, {
+    portal: 1,
+    chamfer: { radius: 10 },
+    isStatic: true,
+    isSensor: true,
+    render:{ //blue
+      strokeStyle:'#66d9ff',
+      fillStyle:'#66d9ff',
+      opacity: 0.5,
+    },
+    angle: Math.PI//Math.PI*0.5 
+  })
   
   //add the player
   const playerRadius = 25
@@ -102,15 +168,15 @@ make portals fireable with ray casting  (consider using point checks, not raycas
   playerSensor.collisionFilter.group = -1
   
   //populate world
-  World.add(engine.world, [player, playerSensor]);
+  World.add(engine.world, [player, playerSensor, portal0, portal1]);
   
   //looks for key presses and logs them
   var keys = [];
   document.body.addEventListener("keydown", function(e) {
-    keys[e.keyCode] = true;
+    keys[e.key] = true;
   });
   document.body.addEventListener("keyup", function(e) {
-    keys[e.keyCode] = false;
+    keys[e.key] = false;
   });
   
   function playerGroundCheck(event, ground) { //runs on collisions events
@@ -125,11 +191,60 @@ make portals fireable with ray casting  (consider using point checks, not raycas
     }
   }
   
+  function touchingPortals(event,pEnter,pExit){
+    var pairs = event.pairs;
+    var d = {x:0,y:0};
+    for (var i = 0, j = pairs.length; i != j; ++i) {
+      var pair = pairs[i];
+      if (pair.bodyB === pEnter && pair.bodyA.portal != pEnter.portal) {
+        //body exiting the portal keeps track of what portal they just left so they don't renter
+        pair.bodyA.portal = pExit.portal;
+        d = {
+          x: -(pEnter.position.x - pair.bodyA.position.x)*0.5,
+          y: (pEnter.position.y - pair.bodyA.position.y)*0.5
+        }
+        Body.setPosition(pair.bodyA, pExit.position);
+        Body.translate(pair.bodyA, d);
+        // rotate velocity
+        Matter.Body.setVelocity(pair.bodyA, rotateVector(pair.bodyA.velocity,pExit.angle-pEnter.angle))
+      } else if (pair.bodyA === pEnter && pair.bodyB.portal != pEnter.portal) {
+        //body exiting the portal keeps track of what portal they just left so they don't renter
+        pair.bodyB.portal = pExit.portal;
+        d = {
+          x: -(pEnter.position.x - pair.bodyB.position.x)*0.5,
+          y: (pEnter.position.y - pair.bodyB.position.y)*0.5
+        }
+        Body.setPosition(pair.bodyB, pExit.position);
+        Body.translate(pair.bodyB, d);
+        // rotate velocity
+        Matter.Body.setVelocity(pair.bodyB, rotateVector(pair.bodyB.velocity,pExit.angle-pEnter.angle))
+      }
+      /* if (pair.bodyB === portal1) {
+        Body.setPosition(pair.bodyA, portal0.position)
+      } else if (pair.bodyA === portal1) {
+        Body.setPosition(pair.bodyB, portal0.position)
+      } */
+    }
+  }
+  
+  function exitingPortal(event, portal){
+    var pairs = event.pairs
+    for (var i = 0, j = pairs.length; i != j; ++i) {
+      var pair = pairs[i];
+      if (pair.bodyA === portal) {
+        pair.bodyB.portal = -1;
+      } else if (pair.bodyB === portal) {
+        pair.bodyA.portal = -1;
+      }
+    }
+  }
   
   
   //at the start of a colision for player
   Events.on(engine, "collisionStart", function(event) {
     playerGroundCheck(event, true)
+    touchingPortals(event,portal0,portal1);
+    touchingPortals(event,portal1,portal0);
   });
   //ongoing checks for collisions for player
   Events.on(engine, "collisionActive", function(event) {
@@ -138,9 +253,11 @@ make portals fireable with ray casting  (consider using point checks, not raycas
   //at the end of a colision for player set ground to false
   Events.on(engine, 'collisionEnd', function(event) {
     playerGroundCheck(event, false);
+    exitingPortal(event,portal0);
+    exitingPortal(event,portal1);
   })
   
-  Events.on(engine, "afterTick", function(event) {
+  Events.on(engine, "afterUpdate", function(event) {
     //set sensor velocity to zero so it collides properly
     Matter.Body.setVelocity(playerSensor, {
         x: 0,
@@ -153,10 +270,10 @@ make portals fireable with ray casting  (consider using point checks, not raycas
     });
   });
   
-  Events.on(engine, "beforeTick", function(event) {
+  Events.on(engine, "beforeUpdate", function(event) {
     game.cycle++;
     //jump
-    if (keys[38] && player.ground && player.jumpCD < game.cycle) {
+    if (keys[38] && player.ground) {
       player.jumpCD = game.cycle + 10; //adds a cooldown to jump
       player.force = {
         x: 0,
