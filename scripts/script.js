@@ -25,7 +25,7 @@
   
   //create polys
   var stack = Matter.Composites.stack(200, 200, 4, 4, 0, 0, function (x, y) {
-    let sides = Math.round(Matter.Common.random(2, 6));
+    let sides = Math.round(Matter.Common.random(4, 4));
     return Matter.Bodies.polygon(x, y, sides, Matter.Common.random(20, 50));
   });
   
